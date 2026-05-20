@@ -10,12 +10,12 @@
   "orientation": "any",
   "icons": [
     {
-      "src": "logo-tactical.png",
+      "src": "logo-fleetrec.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "logo-tactical.png",
+      "src": "logo-fleetrec.png",
       "sizes": "512x512",
       "type": "image/png"
     }
