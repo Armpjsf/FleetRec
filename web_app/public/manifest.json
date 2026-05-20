@@ -1,0 +1,23 @@
+{
+  "name": "Smart Fleet Recommender (PWA)",
+  "short_name": "Fleet Rec",
+  "description": "ระบบวิเคราะห์ขนาดรถและจัดสินค้า (PWA)",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#050B14",
+  "theme_color": "#B60900",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "logo-tactical.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "logo-tactical.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
