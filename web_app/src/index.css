@@ -1081,3 +1081,822 @@ html { height: -webkit-fill-available; }
   .premium-text-gradient { font-size: 19px; }
   .result-vehicle-name { font-size: 17px; }
 }
+
+/* ═══════════════════════════════════════════
+   Main Tabs Navigation
+   ═══════════════════════════════════════════ */
+
+.main-tabs {
+  display: flex;
+  background: rgba(10, 20, 38, 0.5);
+  padding: 6px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 10;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.main-tab-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--muted-foreground);
+  font-weight: 700;
+  font-size: 13.5px;
+  padding: 12px 10px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.main-tab-btn:hover {
+  color: var(--foreground);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.main-tab-btn.active {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+  color: var(--foreground);
+  box-shadow: 0 4px 20px var(--primary-glow);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.main-tab-btn:not(.active):active {
+  transform: scale(0.97);
+}
+
+/* ═══════════════════════════════════════════
+   Oil Price Badge in Header
+   ═══════════════════════════════════════════ */
+
+.oil-price-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 59, 48, 0.08);
+  border: 1px solid rgba(255, 59, 48, 0.25);
+  cursor: default;
+  transition: all 0.3s ease;
+}
+
+.oil-price-pill:hover {
+  background: rgba(255, 59, 48, 0.12);
+  border-color: var(--accent);
+  box-shadow: 0 0 10px var(--accent-glow);
+}
+
+.oil-price-text {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ═══════════════════════════════════════════
+   Carryover (Recommend -> Cost Calculator)
+   ═══════════════════════════════════════════ */
+
+.btn-carryover {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(255, 59, 48, 0.15) 100%);
+  color: var(--warning);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-transform: uppercase;
+}
+
+.btn-carryover:hover {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.3) 0%, rgba(255, 59, 48, 0.25) 100%);
+  color: #fff;
+  border-color: var(--warning);
+  box-shadow: 0 0 12px var(--warning-glow);
+}
+
+.btn-carryover:active {
+  transform: scale(0.95);
+}
+
+/* ═══════════════════════════════════════════
+   Pricing Calculator Elements
+   ═══════════════════════════════════════════ */
+
+.pricing-input-panel {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+}
+
+/* Styled Select Option */
+.form-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 16px;
+  padding-right: 40px !important;
+  cursor: pointer;
+}
+
+.form-select:focus {
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ff3b30' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+}
+
+/* Highlight Panel for Recommended Sell Price */
+.pricing-highlight-panel {
+  background: linear-gradient(135deg, rgba(182, 9, 0, 0.15) 0%, rgba(10, 20, 38, 0.6) 100%);
+  border: 1px solid rgba(255, 59, 48, 0.25);
+  box-shadow: 0 12px 40px rgba(182, 9, 0, 0.15);
+  position: relative;
+  padding: 20px;
+  border-radius: 22px;
+}
+
+.pricing-highlight-panel::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 150px;
+  height: 100%;
+  background: radial-gradient(circle at 100% 0%, rgba(255, 59, 48, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.highlight-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 99px;
+  background: rgba(255, 59, 48, 0.1);
+  color: var(--accent);
+  border: 1px solid rgba(255, 59, 48, 0.2);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.highlight-price {
+  background: linear-gradient(135deg, #ffffff 40%, #ffc5c2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ═══════════════════════════════════════════
+   Table Matrix
+   ═══════════════════════════════════════════ */
+
+.pricing-matrix-panel {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+}
+
+.table-responsive {
+  scrollbar-width: thin;
+}
+
+.pricing-table th {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border);
+}
+
+.pricing-table tbody tr {
+  transition: all 0.2s ease;
+}
+
+.pricing-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* Active Row Highlight Glow style */
+.pricing-table tbody tr.row-active {
+  background: linear-gradient(90deg, rgba(182, 9, 0, 0.12) 0%, rgba(182, 9, 0, 0.04) 100%) !important;
+  border-left: 3px solid var(--accent);
+  position: relative;
+}
+
+.pricing-table tbody tr.row-active td {
+  color: var(--foreground) !important;
+}
+
+.pricing-table tbody tr.row-active .cell-range {
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.pricing-table tbody tr.row-active .cell-price {
+  font-size: 1.05rem;
+  text-shadow: 0 0 10px var(--accent-glow);
+}
+
+.badge-active {
+  box-shadow: 0 2px 8px var(--primary-glow);
+  animation: pulse-glow 2s infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 2px 8px var(--primary-glow); }
+  50% { box-shadow: 0 2px 14px rgba(182, 9, 0, 0.7); }
+}
+
+.badge-inactive {
+  background: rgba(255, 255, 255, 0.04);
+  padding: 2px 8px;
+  border-radius: 99px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.pricing-help-footer {
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+/* ═══════════════════════════════════════════
+   Mobile Responsive Adjustments
+   ═══════════════════════════════════════════ */
+
+@media (max-width: 520px) {
+  .form-group-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+  .form-fields-3col {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   DLP Security & Login Screens Styling
+   ═══════════════════════════════════════════ */
+
+/* Fullscreen Security Screens */
+.security-tamper-screen,
+.security-hijack-screen {
+  background: radial-gradient(circle at center, #1b0707 0%, #050b14 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  padding: 20px;
+  backdrop-filter: blur(20px);
+}
+
+.security-hijack-screen {
+  background: radial-gradient(circle at center, #0e1224 0%, #050b14 100%);
+}
+
+.tamper-card,
+.hijack-card {
+  max-width: 580px;
+  width: 100%;
+  background: rgba(10, 20, 38, 0.7);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 24px;
+  padding: 36px 30px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(239, 68, 68, 0.05);
+  text-align: center;
+  animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.hijack-card {
+  border-color: rgba(255, 59, 48, 0.2);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(255, 59, 48, 0.04);
+}
+
+.tamper-icon-container,
+.hijack-icon-container {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  margin-bottom: 20px;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.1);
+}
+
+.hijack-icon-container {
+  background: rgba(255, 59, 48, 0.08);
+  border-color: rgba(255, 59, 48, 0.2);
+  box-shadow: 0 0 20px rgba(255, 59, 48, 0.1);
+}
+
+.security-tamper-screen h3,
+.security-hijack-screen h3 {
+  font-size: 17px;
+  font-weight: 800;
+  margin-top: 8px;
+  margin-bottom: 14px;
+  color: var(--foreground);
+}
+
+.tamper-desc,
+.hijack-desc {
+  font-size: 13.5px;
+  color: var(--muted-foreground);
+  line-height: 1.6;
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+.tamper-desc strong,
+.hijack-desc strong {
+  color: var(--foreground);
+}
+
+/* Security Metadata & Comparators */
+.tamper-meta {
+  background: rgba(5, 11, 20, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 16px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+.meta-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  font-size: 13px;
+}
+
+.meta-row:last-child {
+  border-bottom: none;
+}
+
+.meta-row span {
+  color: var(--muted-foreground);
+}
+
+.meta-row strong {
+  color: var(--foreground);
+}
+
+.hijack-comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+.comparison-box {
+  padding: 16px;
+  border-radius: 16px;
+  background: rgba(5, 11, 20, 0.5);
+  display: flex;
+  flex-direction: column;
+}
+
+.comparison-box.authorized {
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.02);
+}
+
+.comparison-box.unauthorized {
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.02);
+}
+
+.comparison-box h4 {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.comparison-box ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12.5px;
+}
+
+.comparison-box li {
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+  padding-bottom: 6px;
+}
+
+.comparison-box li:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.comparison-box li span {
+  color: var(--muted-foreground);
+  font-size: 11px;
+  margin-bottom: 2px;
+}
+
+.comparison-box li strong {
+  color: var(--foreground);
+}
+
+/* Warnings and Actions */
+.security-notice {
+  background: rgba(245, 158, 11, 0.04);
+  border: 1px solid rgba(245, 158, 11, 0.15);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  text-align: left;
+  margin-bottom: 24px;
+}
+
+.security-notice p {
+  font-size: 11.5px;
+  color: var(--muted-foreground);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.security-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.btn-security-reset {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: 14px;
+  font-weight: 800;
+  font-size: 12.5px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--foreground);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-security-reset:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.02);
+}
+
+.btn-security-reset:active {
+  transform: scale(0.96);
+}
+
+/* SSO Login Page Design */
+.login-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: var(--background);
+}
+
+.login-card {
+  max-width: 480px;
+  width: 100%;
+  background: var(--card);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid var(--card-border);
+  border-radius: 24px;
+  padding: 40px 30px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+.login-logo-container {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.login-logo-icon {
+  display: inline-flex;
+  padding: 12px;
+  background: var(--primary-muted);
+  border-radius: 20px;
+  border: 1px solid rgba(182, 9, 0, 0.2);
+  margin-bottom: 12px;
+  box-shadow: 0 4px 15px rgba(182, 9, 0, 0.1);
+}
+
+.login-logo-sub {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  margin-top: 4px;
+  opacity: 0.7;
+}
+
+.login-title {
+  text-align: center;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--foreground);
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.login-desc {
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted-foreground);
+  margin-bottom: 24px;
+  line-height: 1.6;
+}
+
+.login-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.login-input {
+  font-size: 15px !important;
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
+.login-error-box {
+  background: rgba(239, 68, 68, 0.06);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #ef4444;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.login-error-box .error-icon {
+  flex-shrink: 0;
+}
+
+.btn-login {
+  height: 48px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  border: none;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 20px var(--primary-glow);
+  transition: all 0.25s ease;
+}
+
+.btn-login:hover {
+  opacity: 0.95;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(182, 9, 0, 0.5);
+}
+
+.btn-login:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+.btn-login:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.simulated-accounts-section {
+  margin-top: 28px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding-top: 20px;
+}
+
+.simulated-accounts-title {
+  font-size: 9.5px;
+  font-weight: 800;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.accounts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.account-test-btn {
+  background: rgba(15, 28, 48, 0.4);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.account-test-btn::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; width: 3px; height: 100%;
+  background: transparent;
+  transition: all 0.2s ease;
+}
+
+.account-test-btn:hover {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.12);
+  transform: translateY(-1px);
+}
+
+.account-test-btn:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+.account-test-btn svg {
+  color: var(--muted-foreground);
+  margin-bottom: 4px;
+}
+
+.account-test-btn strong {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--foreground);
+  margin-bottom: 2px;
+}
+
+.account-test-btn span {
+  font-size: 9px;
+  color: var(--muted-foreground);
+  font-family: monospace;
+}
+
+.account-test-btn.admin {
+  border-color: rgba(16, 185, 129, 0.18);
+}
+
+.account-test-btn.admin:hover {
+  border-color: rgba(16, 185, 129, 0.35);
+  background: rgba(16, 185, 129, 0.02);
+}
+
+.account-test-btn.admin svg {
+  color: var(--success);
+}
+
+.account-test-btn.admin::before {
+  background: var(--success);
+}
+
+.account-test-btn.spy {
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.account-test-btn.spy:hover {
+  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.02);
+}
+
+.account-test-btn.spy svg {
+  color: var(--error);
+}
+
+.account-test-btn.spy::before {
+  background: var(--error);
+}
+
+/* Watermark Overlay Custom styling */
+.secure-watermark-overlay {
+  opacity: 0.03 !important;
+  pointer-events: none;
+}
+
+/* Security Drawer Custom styling */
+.btn-security-center:hover {
+  background: rgba(16, 185, 129, 0.18) !important;
+  border-color: rgba(16, 185, 129, 0.4) !important;
+  color: var(--foreground) !important;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.15);
+}
+
+.btn-security-center:active {
+  transform: scale(0.95);
+}
+
+.btn-simulate-threat:hover {
+  background: rgba(182, 9, 0, 0.9) !important;
+  box-shadow: 0 4px 15px rgba(182, 9, 0, 0.5) !important;
+}
+
+.btn-simulate-threat:active {
+  transform: scale(0.98);
+}
+
+/* DLP Audit log items custom styles */
+.log-item-card {
+  transition: all 0.2s ease;
+}
+
+.log-item-card:hover {
+  transform: translateX(2px);
+}
+
+.log-item-card.blocked {
+  box-shadow: inset 3px 0 0 var(--error);
+}
+
+.log-item-card.warn {
+  box-shadow: inset 3px 0 0 var(--warning);
+}
+
+.log-item-card.secure {
+  box-shadow: inset 3px 0 0 var(--success);
+}
+
+/* Scrollbar styling for logs list */
+.logs-list::-webkit-scrollbar {
+  width: 4px;
+}
+.logs-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.04);
+}
+.logs-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+@media (max-width: 520px) {
+  .hijack-comparison {
+    grid-template-columns: 1fr;
+  }
+  .accounts-grid {
+    grid-template-columns: 1fr;
+  }
+  .tamper-card,
+  .hijack-card,
+  .login-card {
+    padding: 24px 20px;
+    border-radius: 20px;
+  }
+}
+
+
