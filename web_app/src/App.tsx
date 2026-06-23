@@ -552,11 +552,13 @@ export default function App() {
   // Oil Price State
   const [oilPrice, setOilPrice] = useState<number | null>(null);
   const [oilDate, setOilDate] = useState<string | null>(null);
+  const [isFetchingOil, setIsFetchingOil] = useState<boolean>(false);
 
   const fetchOilPrice = useCallback(async () => {
+    setIsFetchingOil(true);
     const apiUrL = 'https://oil-price.bangchak.co.th/ApiOilPrice2/th';
     const proxies = [
-      `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(apiUrL)}`,
+      `https://corsproxy.io/?${encodeURIComponent(apiUrL)}`,
       `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrL)}`,
       apiUrL
     ];
@@ -582,6 +584,7 @@ export default function App() {
           if (diesel) {
             setOilPrice(Number(diesel.PriceToday));
             setOilDate(data[0].OilRemark2 || data[0].OilPriceDate || 'วันนี้');
+            setIsFetchingOil(false);
             return;
           }
         }
@@ -589,8 +592,9 @@ export default function App() {
         console.warn(`Proxy ${i} failed:`, err);
       }
     }
-    setOilPrice(35.20);
+    setOilPrice(37.50);
     setOilDate('ราคาสแตนดาร์ดสำรอง');
+    setIsFetchingOil(false);
   }, []);
 
   useEffect(() => {
@@ -1226,8 +1230,17 @@ export default function App() {
         </div>
         <div className="header-actions">
           {oilPrice !== null && (
-            <div className="oil-price-pill" title={`อัปเดตล่าสุด: ${oilDate}`}>
-              <Droplet size={14} className="text-accent animate-pulse" />
+            <div 
+              className="oil-price-pill" 
+              title={`อัปเดตล่าสุด: ${oilDate} (คลิกเพื่ออัปเดตใหม่)`}
+              onClick={fetchOilPrice}
+              style={{ cursor: 'pointer' }}
+            >
+              {isFetchingOil ? (
+                <Loader size={14} className="text-accent animate-spin" />
+              ) : (
+                <Droplet size={14} className="text-accent animate-pulse" />
+              )}
               <span className="oil-price-text">ดีเซล {oilPrice.toFixed(2)} บ.</span>
             </div>
           )}
