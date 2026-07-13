@@ -549,6 +549,11 @@ export default function App() {
   const [pricingProfitMode, setPricingProfitMode] = useState<'%' | '฿'>('%');
   const [pricingProfitValue, setPricingProfitValue] = useState<number | ''>(15);
 
+  // Apps Script API URL for oil price proxy
+  const [appsScriptUrl, setAppsScriptUrl] = useState<string>(() => {
+    return localStorage.getItem('fleet_rec_apps_script_url') || '';
+  });
+
   // Oil Price State
   const [oilPrice, setOilPrice] = useState<number | null>(null);
   const [oilDate, setOilDate] = useState<string | null>(null);
@@ -557,19 +562,29 @@ export default function App() {
   const fetchOilPrice = useCallback(async () => {
     setIsFetchingOil(true);
     const apiUrL = 'https://oil-price.bangchak.co.th/ApiOilPrice2/th';
-    const proxies = [
-      `https://corsproxy.io/?${encodeURIComponent(apiUrL)}`,
-      `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrL)}`,
-      apiUrL
-    ];
+    const urlsToTry: string[] = [];
 
-    for (let i = 0; i < proxies.length; i++) {
+    // 1. If Apps Script URL is configured, try it first
+    if (appsScriptUrl.trim()) {
+      const separator = appsScriptUrl.includes('?') ? '&' : '?';
+      urlsToTry.push(`${appsScriptUrl.trim()}${separator}action=getOilPrice`);
+    }
+
+    // 2. Fallbacks
+    urlsToTry.push(`https://corsproxy.io/?${encodeURIComponent(apiUrL)}`);
+    urlsToTry.push(`https://api.allorigins.win/get?url=${encodeURIComponent(apiUrL)}`);
+    urlsToTry.push(apiUrL);
+
+    for (let i = 0; i < urlsToTry.length; i++) {
       try {
-        const response = await fetch(proxies[i]);
+        const currentUrl = urlsToTry[i];
+        const isAllOrigins = currentUrl.includes('allorigins.win/get');
+
+        const response = await fetch(currentUrl);
         if (!response.ok) continue;
 
         let data;
-        if (proxies[i].includes('allorigins.win/get')) {
+        if (isAllOrigins) {
           const wrapper = await response.json();
           data = JSON.parse(wrapper.contents);
         } else {
@@ -589,13 +604,13 @@ export default function App() {
           }
         }
       } catch (err) {
-        console.warn(`Proxy ${i} failed:`, err);
+        console.warn(`Fetch oil price attempt ${i} failed:`, err);
       }
     }
     setOilPrice(37.50);
     setOilDate('ราคาสแตนดาร์ดสำรอง');
     setIsFetchingOil(false);
-  }, []);
+  }, [appsScriptUrl]);
 
   useEffect(() => {
     fetchOilPrice();
@@ -1855,6 +1870,20 @@ export default function App() {
               value={sheetUrl}
               onChange={e => setSheetUrl(e.target.value)}
               placeholder="วางลิงก์ Google Sheet ที่นี่..."
+              className="form-input"
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">ลิงก์ Google Apps Script API (สำหรับดึงราคาน้ำมัน)</label>
+            <input
+              type="text"
+              value={appsScriptUrl}
+              onChange={e => {
+                setAppsScriptUrl(e.target.value);
+                localStorage.setItem('fleet_rec_apps_script_url', e.target.value);
+              }}
+              placeholder="วางลิงก์ Web App (.gs /exec) ที่นี่..."
               className="form-input"
             />
           </div>
