@@ -652,7 +652,12 @@ export default function App() {
       return { matrixKey: '10' as const, defaultMultiplier: defMult, label: found.type, isTrailer: true };
     }
 
-    // 4 ล้อ
+    // 4 ล้อจัมโบ้ / 4WJ / Extended
+    if (text.includes('4wj') || text.includes('jumbo') || text.includes('จัมโบ้') || text.includes('extended')) {
+      return { matrixKey: '4' as const, defaultMultiplier: 1.15, label: found.type, isTrailer: false };
+    }
+
+    // 4 ล้อทั่วไป
     if (text.includes('4') || text.includes('4 ล้อ') || text.includes('กระบะ')) {
       return { matrixKey: '4' as const, defaultMultiplier: 1.0, label: found.type, isTrailer: false };
     }
