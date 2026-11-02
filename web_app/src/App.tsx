@@ -25,7 +25,8 @@ import {
   Fingerprint,
   AlertOctagon,
   Terminal,
-  Activity
+  Activity,
+  RotateCcw
 } from 'lucide-react';
 import pricingMatrix from './pricing_matrix.json';
 
@@ -541,7 +542,8 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'recommender' | 'pricing'>('recommender');
 
   // Pricing Calculator State
-  const [pricingVehicleType, setPricingVehicleType] = useState<'4' | '6' | '10'>('6');
+  const [pricingVehicle, setPricingVehicle] = useState<string>('6');
+  const [pricingMultiplier, setPricingMultiplier] = useState<number>(1.0);
   const [pricingDistance, setPricingDistance] = useState<number | ''>('');
   const [pricingExtraLift, setPricingExtraLift] = useState<number | ''>('');
   const [pricingExtraMove, setPricingExtraMove] = useState<number | ''>('');
@@ -626,6 +628,48 @@ export default function App() {
   const [directWeight, setDirectWeight] = useState(0);
 
   const [vehicles, setVehicles] = useState<Vehicle[]>(DEFAULT_VEHICLES);
+  const [manualSelectedVehicleType, setManualSelectedVehicleType] = useState<string>('auto');
+
+  /* ─── Resolve Pricing Vehicle Group & Multiplier ─── */
+  const resolvePricingVehicle = useCallback((selected: string, vehiclesList: Vehicle[]) => {
+    if (selected === '4' || selected === 'group_4') return { matrixKey: '4' as const, defaultMultiplier: 1.0, label: 'รถ 4 ล้อ (มาตรฐาน)', isTrailer: false };
+    if (selected === '6' || selected === 'group_6') return { matrixKey: '6' as const, defaultMultiplier: 1.0, label: 'รถ 6 ล้อ (มาตรฐาน)', isTrailer: false };
+    if (selected === '10' || selected === 'group_10') return { matrixKey: '10' as const, defaultMultiplier: 1.0, label: 'รถ 10 ล้อ (มาตรฐาน)', isTrailer: false };
+
+    const found = vehiclesList.find(v => v.type === selected);
+    if (!found) {
+      return { matrixKey: '6' as const, defaultMultiplier: 1.0, label: selected, isTrailer: false };
+    }
+
+    const text = `${found.type} ${found.axles} ${found.note}`.toLowerCase();
+
+    // 18-22 ล้อ / รถพ่วง / เทรลเลอร์
+    if (text.includes('18') || text.includes('22') || text.includes('พ่วง') || text.includes('semi-trailer') || text.includes('full trailer') || text.includes('trailer')) {
+      let defMult = 1.45;
+      if (text.includes('22') || text.includes('full trailer')) defMult = 1.5;
+      else if (text.includes('18') || text.includes('semi-trailer')) defMult = 1.45;
+      else if (text.includes('พ่วง')) defMult = 1.4;
+      return { matrixKey: '10' as const, defaultMultiplier: defMult, label: found.type, isTrailer: true };
+    }
+
+    // 4 ล้อ
+    if (text.includes('4') || text.includes('4 ล้อ') || text.includes('กระบะ')) {
+      return { matrixKey: '4' as const, defaultMultiplier: 1.0, label: found.type, isTrailer: false };
+    }
+    // 6 ล้อ
+    if (text.includes('6') || text.includes('6 ล้อ')) {
+      return { matrixKey: '6' as const, defaultMultiplier: 1.0, label: found.type, isTrailer: false };
+    }
+
+    // Default to 10 ล้อ
+    return { matrixKey: '10' as const, defaultMultiplier: 1.0, label: found.type, isTrailer: false };
+  }, []);
+
+  const handlePricingVehicleChange = (val: string) => {
+    setPricingVehicle(val);
+    const info = resolvePricingVehicle(val, vehicles);
+    setPricingMultiplier(info.defaultMultiplier);
+  };
   const [sheetUrl, setSheetUrl] = useState(DEFAULT_SHEET_URL);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [syncError, setSyncError] = useState('');
@@ -678,8 +722,9 @@ export default function App() {
       return matchingKey ? row[matchingKey] : '';
     };
 
-    const mapped: Vehicle[] = rows.map(row => {
-      const rankVal = parseInt(getVal(row, ['Rank', 'ลำดับ', 'rank', 'no', 'No']), 10);
+    const mapped: Vehicle[] = rows.map((row, idx) => {
+      const rawRank = getVal(row, ['Rank', 'ลำดับ', 'rank', 'no', 'No']);
+      const rankVal = parseInt(rawRank, 10);
       const typeVal = getVal(row, ['Vehicle_Type', 'Vehicle Type', 'ประเภทรถ', 'ประเภท', 'type', 'name', 'Variant']);
       const weightVal = parseFloat(getVal(row, ['Max_Weight_KG', 'Max Weight (kg)', 'Max Weight', 'น้ำหนักสูงสุด', 'maxweight', 'Weight_Limit_KG']));
       const cbmVal = parseFloat(getVal(row, ['Max_CBM', 'Max CBM', 'CBM สูงสุด', 'maxcbm', 'CBM_Capacity', 'ปริมาตร']));
@@ -688,15 +733,15 @@ export default function App() {
       const noteVal = getVal(row, ['Note', 'หมายเหตุ', 'note', 'Remark', 'remark']);
 
       return {
-        rank: isNaN(rankVal) ? 99 : rankVal,
-        type: typeVal || 'ไม่ระบุประเภท',
+        rank: isNaN(rankVal) ? (idx + 1) : rankVal,
+        type: typeVal ? typeVal.trim() : 'ไม่ระบุประเภท',
         maxWeight: isNaN(weightVal) ? 99999 : weightVal,
         maxCbm: isNaN(cbmVal) ? 999 : cbmVal,
         dimensions: dimVal || '-',
         axles: axleVal || '-',
         note: noteVal || ''
       };
-    }).filter(v => v.rank !== 99);
+    }).filter(v => v.type && v.type !== 'ไม่ระบุประเภท');
 
     mapped.sort((a, b) => a.rank - b.rank);
     return mapped;
@@ -787,7 +832,7 @@ export default function App() {
 
   const hasData = totalCbm > 0 || totalWeight > 0;
 
-  /* ─── Vehicle Matching ─── */
+  /* ─── Vehicle Matching & Selection ─── */
   const findRecommendedVehicle = (cbm: number, weight: number): Vehicle | null => {
     const sorted = [...vehicles].sort((a, b) => a.rank - b.rank);
     for (const vehicle of sorted) {
@@ -798,7 +843,15 @@ export default function App() {
     return null;
   };
 
-  const matchedVehicle = hasData ? findRecommendedVehicle(totalCbm, totalWeight) : null;
+  const isManualMode = manualSelectedVehicleType !== 'auto';
+  const autoMatchedVehicle = hasData ? findRecommendedVehicle(totalCbm, totalWeight) : null;
+  const displayedVehicle = isManualMode
+    ? (vehicles.find(v => v.type === manualSelectedVehicleType) || null)
+    : autoMatchedVehicle;
+
+  const isOverWeight = Boolean(displayedVehicle && hasData && totalWeight > displayedVehicle.maxWeight);
+  const isOverCbm = Boolean(displayedVehicle && hasData && totalCbm > displayedVehicle.maxCbm);
+  const isVehicleOverloaded = isOverWeight || isOverCbm;
 
   /* ─── Pricing Calculations ─── */
   const getOilRangeIndex = (price: number): number => {
@@ -819,9 +872,13 @@ export default function App() {
   const pricingDistanceNum = Number(pricingDistance) || 0;
   const pricingRoundedDist = Math.min(3000, Math.ceil(pricingDistanceNum / 50) * 50);
 
+  const currentPricingInfo = resolvePricingVehicle(pricingVehicle, vehicles);
   let pricingBaseCosts: number[] | null = null;
-  if (pricingRoundedDist > 0 && (pricingMatrix.matrix as any)[pricingVehicleType]) {
-    pricingBaseCosts = (pricingMatrix.matrix as any)[pricingVehicleType][pricingRoundedDist.toString()] || null;
+  if (pricingRoundedDist > 0 && (pricingMatrix.matrix as any)[currentPricingInfo.matrixKey]) {
+    const rawCosts = (pricingMatrix.matrix as any)[currentPricingInfo.matrixKey][pricingRoundedDist.toString()] || null;
+    if (rawCosts && Array.isArray(rawCosts)) {
+      pricingBaseCosts = rawCosts.map((cost: number) => Math.round(cost * pricingMultiplier));
+    }
   }
 
   const pricingExtraCosts = (Number(pricingExtraLift) || 0) +
@@ -899,8 +956,14 @@ export default function App() {
   };
 
   /* ─── Gauge Math ─── */
-  const weightPct = matchedVehicle ? Math.min(100, Math.round((totalWeight / matchedVehicle.maxWeight) * 100)) : 0;
-  const cbmPct = matchedVehicle ? Math.min(100, Math.round((totalCbm / matchedVehicle.maxCbm) * 100)) : 0;
+  const realWeightPct = displayedVehicle && displayedVehicle.maxWeight > 0
+    ? Math.round((totalWeight / displayedVehicle.maxWeight) * 100)
+    : 0;
+  const realCbmPct = displayedVehicle && displayedVehicle.maxCbm > 0
+    ? Math.round((totalCbm / displayedVehicle.maxCbm) * 100)
+    : 0;
+  const weightPct = Math.min(100, realWeightPct);
+  const cbmPct = Math.min(100, realCbmPct);
   const circ = 2 * Math.PI * 38;
 
   /* ─── Overload Analysis ─── */
@@ -1513,72 +1576,134 @@ export default function App() {
           </section>
         )}
 
-        {/* ─── Empty State ─── */}
-        {!hasData && (
+        {/* ─── Vehicle Selection Control ─── */}
+        <section className="glass-panel" style={{ marginBottom: 16, padding: '14px 18px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <label className="form-label" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600 }}>
+              <Truck size={16} className="text-primary" />
+              <span>โหมดและประเภทรถ</span>
+            </label>
+            {isManualMode && (
+              <button
+                type="button"
+                onClick={() => setManualSelectedVehicleType('auto')}
+                style={{
+                  background: 'rgba(255, 59, 48, 0.1)',
+                  border: '1px solid rgba(255, 59, 48, 0.25)',
+                  borderRadius: 'var(--radius-xs)',
+                  color: 'var(--primary)',
+                  fontSize: '0.75rem',
+                  padding: '4px 10px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 5
+                }}
+              >
+                <RotateCcw size={12} />
+                <span>รีเซ็ตเป็นแนะนำอัตโนมัติ</span>
+              </button>
+            )}
+          </div>
+          <select
+            value={manualSelectedVehicleType}
+            onChange={e => setManualSelectedVehicleType(e.target.value)}
+            className="form-input form-select"
+            style={{ width: '100%', WebkitAppearance: 'none', appearance: 'none' }}
+          >
+            <option value="auto">✨ แนะนำอัตโนมัติตามขนาด/น้ำหนักสินค้า (Auto-Match)</option>
+            <optgroup label="📋 เลือกรถด้วยตนเองจากฐานข้อมูล (Google Sheet)">
+              {vehicles.map(v => (
+                <option key={v.type} value={v.type}>
+                  [ลำดับ {v.rank}] {v.type} — สูงสุด {v.maxWeight.toLocaleString()} กก. / {v.maxCbm} CBM ({v.axles})
+                </option>
+              ))}
+            </optgroup>
+          </select>
+        </section>
+
+        {/* ─── Empty State (เมื่อไม่มีข้อมูลสินค้า และไม่ได้เลือกรถเอง) ─── */}
+        {!hasData && !isManualMode && (
           <section className="glass-panel empty-state">
             <PackageOpen size={48} className="empty-icon" />
             <h3>กรอกข้อมูลสินค้า</h3>
-            <p>ระบุขนาดและน้ำหนักสินค้าเพื่อดูผลแนะนำประเภทรถ</p>
+            <p>ระบุขนาดและน้ำหนักสินค้าเพื่อดูผลแนะนำประเภทรถ หรือเลือกประเภทรถด้านบนเพื่อดูสเปก</p>
           </section>
         )}
 
-        {/* ─── Recommendation Result ─── */}
-        {hasData && matchedVehicle && (
+        {/* ─── Recommendation / Manual Selection Result ─── */}
+        {displayedVehicle && (hasData || isManualMode) && (
           <section className="glass-panel result-panel animate-slideIn">
             <div className="result-header">
               <div>
-                <p className="result-label">RECOMMENDED VEHICLE</p>
-                <h3 className="result-vehicle-name">{matchedVehicle.type}</h3>
+                <p className="result-label">
+                  {isManualMode ? 'MANUAL SELECTED VEHICLE (เลือกรถด้วยตนเอง)' : 'RECOMMENDED VEHICLE (ระบบแนะนำอัตโนมัติ)'}
+                </p>
+                <h3 className="result-vehicle-name">{displayedVehicle.type}</h3>
               </div>
               <div className="result-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div className="result-rank-badge" style={{ margin: 0 }}>RANK {matchedVehicle.rank}</div>
-                {(() => {
-                  let wheelType: '4' | '6' | '10' = '6';
-                  if (matchedVehicle.axles.includes('4') || matchedVehicle.type.includes('4 ล้อ')) wheelType = '4';
-                  else if (matchedVehicle.axles.includes('6') || matchedVehicle.type.includes('6 ล้อ')) wheelType = '6';
-                  else if (matchedVehicle.axles.includes('10') || matchedVehicle.type.includes('10 ล้อ')) wheelType = '10';
-                  
-                  return (
-                    <button
-                      onClick={() => {
-                        setPricingVehicleType(wheelType);
-                        setActiveTab('pricing');
-                      }}
-                      className="btn-carryover"
-                      title="ส่งไปคำนวณเงินค่าจัดส่งและเสนอราคาต่อ"
-                    >
-                      <Coins size={13} />
-                      <span>คำนวณราคาต่อ</span>
-                    </button>
-                  );
-                })()}
+                <div className="result-rank-badge" style={{ margin: 0 }}>RANK {displayedVehicle.rank}</div>
+                <button
+                  onClick={() => {
+                    handlePricingVehicleChange(displayedVehicle.type);
+                    setActiveTab('pricing');
+                  }}
+                  className="btn-carryover"
+                  title="ส่งไปคำนวณเงินค่าจัดส่งและเสนอราคาต่อ"
+                >
+                  <Coins size={13} />
+                  <span>คำนวณราคาต่อ</span>
+                </button>
               </div>
             </div>
+
+            {/* Overload Warning inside Card when manual vehicle is too small */}
+            {isVehicleOverloaded && (
+              <div className="vehicle-note" style={{
+                background: 'rgba(239, 68, 68, 0.12)',
+                border: '1px solid rgba(239, 68, 68, 0.35)',
+                color: '#fca5a5',
+                marginTop: 12,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '10px 14px',
+                borderRadius: 'var(--radius-xs)'
+              }}>
+                <AlertTriangle size={18} style={{ color: '#ef4444', flexShrink: 0 }} />
+                <span style={{ fontSize: '0.85rem' }}>
+                  <strong>⚠️ สินค้าเกินขีดจำกัดของรถที่เลือก:</strong>{' '}
+                  {isOverWeight && `น้ำหนักเกิน ${(totalWeight - displayedVehicle.maxWeight).toLocaleString()} กก.`}
+                  {isOverWeight && isOverCbm && ' | '}
+                  {isOverCbm && `ปริมาตรเกิน ${(totalCbm - displayedVehicle.maxCbm).toFixed(2)} CBM`}
+                </span>
+              </div>
+            )}
 
             {/* Spec Grid */}
             <div className="spec-grid">
               <div className="spec-item">
                 <Maximize className="spec-icon" size={15} />
                 <span className="spec-label">ขนาดภายใน</span>
-                <span className="spec-value">{matchedVehicle.dimensions}</span>
+                <span className="spec-value">{displayedVehicle.dimensions}</span>
               </div>
               <div className="spec-item">
                 <Scale className="spec-icon" size={15} />
                 <span className="spec-label">น้ำหนักสูงสุด</span>
-                <span className="spec-value">{matchedVehicle.maxWeight.toLocaleString()} กก.</span>
+                <span className="spec-value">{displayedVehicle.maxWeight.toLocaleString()} กก.</span>
               </div>
               <div className="spec-item">
                 <Truck className="spec-icon" size={15} />
                 <span className="spec-label">ล้อ</span>
-                <span className="spec-value">{matchedVehicle.axles}</span>
+                <span className="spec-value">{displayedVehicle.axles}</span>
               </div>
             </div>
 
             {/* Vehicle Note */}
-            {matchedVehicle.note && (
+            {displayedVehicle.note && (
               <div className="vehicle-note">
                 <AlertTriangle size={13} />
-                <span>{matchedVehicle.note}</span>
+                <span>{displayedVehicle.note}</span>
               </div>
             )}
 
@@ -1593,7 +1718,7 @@ export default function App() {
                 <div className="truck-wheel wheel-1" />
                 <div className="truck-wheel wheel-2" />
                 <div className="truck-wheel wheel-3" />
-                {matchedVehicle.rank >= 5 && <div className="truck-wheel wheel-4" />}
+                {displayedVehicle.rank >= 5 && <div className="truck-wheel wheel-4" />}
               </div>
             </div>
 
@@ -1606,15 +1731,15 @@ export default function App() {
                     <circle
                       className="gauge-bar"
                       cx="45" cy="45" r="38"
-                      stroke={weightPct > 90 ? '#ef4444' : '#b60900'}
+                      stroke={realWeightPct > 90 ? '#ef4444' : '#b60900'}
                       strokeDasharray={circ}
                       strokeDashoffset={circ - (weightPct / 100) * circ}
                     />
                   </svg>
-                  <span className="gauge-pct">{weightPct}%</span>
+                  <span className="gauge-pct" style={{ color: realWeightPct > 100 ? '#ef4444' : undefined }}>{realWeightPct}%</span>
                 </div>
                 <p className="gauge-label">น้ำหนักบรรทุก</p>
-                <p className="gauge-detail">{totalWeight.toLocaleString()} / {matchedVehicle.maxWeight.toLocaleString()} กก.</p>
+                <p className="gauge-detail">{totalWeight.toLocaleString()} / {displayedVehicle.maxWeight.toLocaleString()} กก.</p>
               </div>
 
               <div className="gauge-card">
@@ -1624,22 +1749,22 @@ export default function App() {
                     <circle
                       className="gauge-bar"
                       cx="45" cy="45" r="38"
-                      stroke={cbmPct > 90 ? '#ef4444' : '#b60900'}
+                      stroke={realCbmPct > 90 ? '#ef4444' : '#b60900'}
                       strokeDasharray={circ}
                       strokeDashoffset={circ - (cbmPct / 100) * circ}
                     />
                   </svg>
-                  <span className="gauge-pct">{cbmPct}%</span>
+                  <span className="gauge-pct" style={{ color: realCbmPct > 100 ? '#ef4444' : undefined }}>{realCbmPct}%</span>
                 </div>
                 <p className="gauge-label">พื้นที่ CBM</p>
-                <p className="gauge-detail">{totalCbm.toFixed(1)} / {matchedVehicle.maxCbm.toFixed(1)} CBM</p>
+                <p className="gauge-detail">{totalCbm.toFixed(1)} / {displayedVehicle.maxCbm.toFixed(1)} CBM</p>
               </div>
             </div>
           </section>
         )}
 
         {/* ─── Overload ─── */}
-        {hasData && !matchedVehicle && renderOverloadAnalysis()}
+        {hasData && !displayedVehicle && !isManualMode && renderOverloadAnalysis()}
 
       </main>
       </>
@@ -1653,16 +1778,25 @@ export default function App() {
             
             <div className="form-group-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
               <div className="form-group">
-                <label className="form-label">ประเภทรถ (ล้อ)</label>
+                <label className="form-label">ประเภทรถสำหรับคำนวณราคา</label>
                 <select
-                  value={pricingVehicleType}
-                  onChange={e => setPricingVehicleType(e.target.value as any)}
+                  value={pricingVehicle}
+                  onChange={e => handlePricingVehicleChange(e.target.value)}
                   className="form-input form-select"
                   style={{ width: '100%', WebkitAppearance: 'none', appearance: 'none' }}
                 >
-                  <option value="4">รถ 4 ล้อ</option>
-                  <option value="6">รถ 6 ล้อ</option>
-                  <option value="10">รถ 10 ล้อ</option>
+                  <optgroup label="📋 ประเภทรถจากฐานข้อมูล (Google Sheet)">
+                    {vehicles.map(v => (
+                      <option key={v.type} value={v.type}>
+                        [ลำดับ {v.rank}] {v.type} ({v.axles})
+                      </option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="⚙️ หรือเลือกตามขนาดล้อมาตรฐาน">
+                    <option value="group_4">รถ 4 ล้อ (มาตรฐาน)</option>
+                    <option value="group_6">รถ 6 ล้อ (มาตรฐาน)</option>
+                    <option value="group_10">รถ 10 ล้อ (มาตรฐาน)</option>
+                  </optgroup>
                 </select>
               </div>
 
@@ -1680,6 +1814,45 @@ export default function App() {
                   style={{ width: '100%' }}
                 />
               </div>
+
+              {(currentPricingInfo.isTrailer || pricingMultiplier !== 1.0) && (
+                <div style={{
+                  gridColumn: '1 / -1',
+                  marginTop: -4,
+                  padding: '10px 14px',
+                  background: 'rgba(245, 158, 11, 0.08)',
+                  border: '1px solid rgba(245, 158, 11, 0.25)',
+                  borderRadius: 'var(--radius-xs)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '8px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: '#fbbf24' }}>
+                    <Info size={15} style={{ flexShrink: 0 }} />
+                    <span>
+                      <strong>{currentPricingInfo.label}:</strong> อิงฐานต้นทุนรถ {currentPricingInfo.matrixKey} ล้อ (คูณสัมประสิทธิ์ {pricingMultiplier}x)
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <label style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>ปรับตัวคูณต้นทุน:</label>
+                    <input
+                      type="number"
+                      step="0.05"
+                      min="0.5"
+                      max="3.0"
+                      value={pricingMultiplier}
+                      onChange={e => {
+                        const val = parseFloat(e.target.value);
+                        setPricingMultiplier(isNaN(val) ? 1.0 : val);
+                      }}
+                      className="form-input"
+                      style={{ width: '70px', padding: '4px 8px', fontSize: '0.8rem', height: 'auto', textAlign: 'center' }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="extra-costs-title" style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--muted-foreground)', marginBottom: '8px', marginTop: '16px' }}>🛠️ ค่าบริการพิเศษเพิ่มเติม (ถ้ามี)</div>
@@ -1797,7 +1970,7 @@ export default function App() {
               <section className="glass-panel pricing-matrix-panel">
                 <div className="matrix-header" style={{ marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   <h3 className="section-title">📊 ตารางวิเคราะห์แยกตามราคาน้ำมัน</h3>
-                  <span className="matrix-sub" style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>ระยะคำนวณ {pricingRoundedDist} กม. (รถ {pricingVehicleType} ล้อ)</span>
+                  <span className="matrix-sub" style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>ระยะคำนวณ {pricingRoundedDist} กม. ({currentPricingInfo.label}{pricingMultiplier !== 1.0 ? ` • ตัวคูณ ${pricingMultiplier}x` : ''})</span>
                 </div>
 
                 <div className="table-responsive" style={{ overflowX: 'auto', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
