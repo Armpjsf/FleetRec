@@ -675,6 +675,14 @@ export default function App() {
     const info = resolvePricingVehicle(val, vehicles);
     setPricingMultiplier(info.defaultMultiplier);
   };
+
+  useEffect(() => {
+    if (vehicles.length > 0 && !vehicles.some(v => v.type === pricingVehicle)) {
+      setPricingVehicle(vehicles[0].type);
+      const info = resolvePricingVehicle(vehicles[0].type, vehicles);
+      setPricingMultiplier(info.defaultMultiplier);
+    }
+  }, [vehicles, pricingVehicle, resolvePricingVehicle]);
   const [sheetUrl, setSheetUrl] = useState(DEFAULT_SHEET_URL);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [syncError, setSyncError] = useState('');
@@ -1791,18 +1799,11 @@ export default function App() {
                   className="form-input form-select"
                   style={{ width: '100%', WebkitAppearance: 'none', appearance: 'none' }}
                 >
-                  <optgroup label="📋 ประเภทรถจากฐานข้อมูล (Google Sheet)">
-                    {vehicles.map(v => (
-                      <option key={v.type} value={v.type}>
-                        {v.type}{v.axles && v.axles !== '-' ? ` (${v.axles})` : ''}
-                      </option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="⚙️ หรือเลือกตามขนาดล้อมาตรฐาน">
-                    <option value="group_4">รถ 4 ล้อ (มาตรฐาน)</option>
-                    <option value="group_6">รถ 6 ล้อ (มาตรฐาน)</option>
-                    <option value="group_10">รถ 10 ล้อ (มาตรฐาน)</option>
-                  </optgroup>
+                  {vehicles.map(v => (
+                    <option key={v.type} value={v.type}>
+                      {v.type}{v.axles && v.axles !== '-' ? ` (${v.axles})` : ''}
+                    </option>
+                  ))}
                 </select>
               </div>
 
