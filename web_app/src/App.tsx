@@ -543,7 +543,7 @@ export default function App() {
 
   // Pricing Calculator State
   const [pricingVehicle, setPricingVehicle] = useState<string>('6');
-  const [pricingMultiplier, setPricingMultiplier] = useState<number>(1.0);
+  const [pricingMultiplier, setPricingMultiplier] = useState<number | ''>(1.0);
   const [pricingDistance, setPricingDistance] = useState<number | ''>('');
   const [pricingExtraLift, setPricingExtraLift] = useState<number | ''>('');
   const [pricingExtraMove, setPricingExtraMove] = useState<number | ''>('');
@@ -632,13 +632,13 @@ export default function App() {
 
   /* ─── Resolve Pricing Vehicle Group & Multiplier ─── */
   const resolvePricingVehicle = useCallback((selected: string, vehiclesList: Vehicle[]) => {
-    if (selected === '4' || selected === 'group_4') return { matrixKey: '4' as const, defaultMultiplier: 1.0, label: 'รถ 4 ล้อ (มาตรฐาน)', isTrailer: false };
-    if (selected === '6' || selected === 'group_6') return { matrixKey: '6' as const, defaultMultiplier: 1.0, label: 'รถ 6 ล้อ (มาตรฐาน)', isTrailer: false };
-    if (selected === '10' || selected === 'group_10') return { matrixKey: '10' as const, defaultMultiplier: 1.0, label: 'รถ 10 ล้อ (มาตรฐาน)', isTrailer: false };
+    if (selected === '4' || selected === 'group_4') return { matrixKey: '4' as const, defaultMultiplier: 1.0, label: 'รถ 4 ล้อ (มาตรฐาน)', hasMultiplier: false };
+    if (selected === '6' || selected === 'group_6') return { matrixKey: '6' as const, defaultMultiplier: 1.0, label: 'รถ 6 ล้อ (มาตรฐาน)', hasMultiplier: false };
+    if (selected === '10' || selected === 'group_10') return { matrixKey: '10' as const, defaultMultiplier: 1.0, label: 'รถ 10 ล้อ (มาตรฐาน)', hasMultiplier: false };
 
     const found = vehiclesList.find(v => v.type === selected);
     if (!found) {
-      return { matrixKey: '6' as const, defaultMultiplier: 1.0, label: selected, isTrailer: false };
+      return { matrixKey: '6' as const, defaultMultiplier: 1.0, label: selected, hasMultiplier: false };
     }
 
     const text = `${found.type} ${found.axles} ${found.note}`.toLowerCase();
@@ -649,25 +649,25 @@ export default function App() {
       if (text.includes('22') || text.includes('full trailer')) defMult = 1.5;
       else if (text.includes('18') || text.includes('semi-trailer')) defMult = 1.45;
       else if (text.includes('พ่วง')) defMult = 1.4;
-      return { matrixKey: '10' as const, defaultMultiplier: defMult, label: found.type, isTrailer: true };
+      return { matrixKey: '10' as const, defaultMultiplier: defMult, label: found.type, hasMultiplier: true };
     }
 
     // 4 ล้อจัมโบ้ / 4WJ / Extended
     if (text.includes('4wj') || text.includes('jumbo') || text.includes('จัมโบ้') || text.includes('extended')) {
-      return { matrixKey: '4' as const, defaultMultiplier: 1.15, label: found.type, isTrailer: false };
+      return { matrixKey: '4' as const, defaultMultiplier: 1.15, label: found.type, hasMultiplier: true };
     }
 
     // 4 ล้อทั่วไป
     if (text.includes('4') || text.includes('4 ล้อ') || text.includes('กระบะ')) {
-      return { matrixKey: '4' as const, defaultMultiplier: 1.0, label: found.type, isTrailer: false };
+      return { matrixKey: '4' as const, defaultMultiplier: 1.0, label: found.type, hasMultiplier: false };
     }
     // 6 ล้อ
     if (text.includes('6') || text.includes('6 ล้อ')) {
-      return { matrixKey: '6' as const, defaultMultiplier: 1.0, label: found.type, isTrailer: false };
+      return { matrixKey: '6' as const, defaultMultiplier: 1.0, label: found.type, hasMultiplier: false };
     }
 
     // Default to 10 ล้อ
-    return { matrixKey: '10' as const, defaultMultiplier: 1.0, label: found.type, isTrailer: false };
+    return { matrixKey: '10' as const, defaultMultiplier: 1.0, label: found.type, hasMultiplier: false };
   }, []);
 
   const handlePricingVehicleChange = (val: string) => {
@@ -878,11 +878,12 @@ export default function App() {
   const pricingRoundedDist = Math.min(3000, Math.ceil(pricingDistanceNum / 50) * 50);
 
   const currentPricingInfo = resolvePricingVehicle(pricingVehicle, vehicles);
+  const activeMultiplier = typeof pricingMultiplier === 'number' && pricingMultiplier > 0 ? pricingMultiplier : 1.0;
   let pricingBaseCosts: number[] | null = null;
   if (pricingRoundedDist > 0 && (pricingMatrix.matrix as any)[currentPricingInfo.matrixKey]) {
     const rawCosts = (pricingMatrix.matrix as any)[currentPricingInfo.matrixKey][pricingRoundedDist.toString()] || null;
     if (rawCosts && Array.isArray(rawCosts)) {
-      pricingBaseCosts = rawCosts.map((cost: number) => Math.round(cost * pricingMultiplier));
+      pricingBaseCosts = rawCosts.map((cost: number) => Math.round(cost * activeMultiplier));
     }
   }
 
@@ -1820,11 +1821,11 @@ export default function App() {
                 />
               </div>
 
-              {(currentPricingInfo.isTrailer || pricingMultiplier !== 1.0) && (
+              {currentPricingInfo.hasMultiplier && (
                 <div style={{
                   gridColumn: '1 / -1',
                   marginTop: -4,
-                  padding: '10px 14px',
+                  padding: '12px 14px',
                   background: 'rgba(245, 158, 11, 0.08)',
                   border: '1px solid rgba(245, 158, 11, 0.25)',
                   borderRadius: 'var(--radius-xs)',
@@ -1832,28 +1833,45 @@ export default function App() {
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   flexWrap: 'wrap',
-                  gap: '8px'
+                  gap: '10px'
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: '#fbbf24' }}>
-                    <Info size={15} style={{ flexShrink: 0 }} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', color: '#fbbf24' }}>
+                    <Info size={16} style={{ flexShrink: 0 }} />
                     <span>
-                      <strong>{currentPricingInfo.label}:</strong> อิงฐานต้นทุนรถ {currentPricingInfo.matrixKey} ล้อ (คูณสัมประสิทธิ์ {pricingMultiplier}x)
+                      <strong>{currentPricingInfo.label}:</strong> อิงฐานต้นทุนรถ {currentPricingInfo.matrixKey} ล้อ{' '}
+                      {typeof pricingMultiplier === 'number' && (
+                        <span style={{ color: 'var(--foreground)', opacity: 0.85 }}>
+                          (ตัวคูณ {pricingMultiplier}x {pricingMultiplier > 1.0 ? `[+${Math.round((pricingMultiplier - 1) * 100)}%]` : pricingMultiplier < 1.0 ? `[${Math.round((pricingMultiplier - 1) * 100)}%]` : ''})
+                        </span>
+                      )}
                     </span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <label style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>ปรับตัวคูณต้นทุน:</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <label style={{ fontSize: '0.8rem', color: 'var(--muted-foreground)' }}>ตัวคูณต้นทุน:</label>
                     <input
                       type="number"
                       step="0.05"
                       min="0.5"
                       max="3.0"
+                      inputMode="decimal"
                       value={pricingMultiplier}
                       onChange={e => {
-                        const val = parseFloat(e.target.value);
-                        setPricingMultiplier(isNaN(val) ? 1.0 : val);
+                        const raw = e.target.value;
+                        if (raw === '') {
+                          setPricingMultiplier('');
+                        } else {
+                          const val = parseFloat(raw);
+                          setPricingMultiplier(isNaN(val) ? '' : val);
+                        }
+                      }}
+                      onBlur={() => {
+                        if (pricingMultiplier === '' || pricingMultiplier <= 0) {
+                          setPricingMultiplier(currentPricingInfo.defaultMultiplier);
+                        }
                       }}
                       className="form-input"
-                      style={{ width: '70px', padding: '4px 8px', fontSize: '0.8rem', height: 'auto', textAlign: 'center' }}
+                      placeholder={currentPricingInfo.defaultMultiplier.toString()}
+                      style={{ width: '80px', padding: '6px 10px', fontSize: '0.85rem', height: 'auto', textAlign: 'center', fontWeight: 600 }}
                     />
                   </div>
                 </div>
@@ -1975,7 +1993,7 @@ export default function App() {
               <section className="glass-panel pricing-matrix-panel">
                 <div className="matrix-header" style={{ marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   <h3 className="section-title">📊 ตารางวิเคราะห์แยกตามราคาน้ำมัน</h3>
-                  <span className="matrix-sub" style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>ระยะคำนวณ {pricingRoundedDist} กม. ({currentPricingInfo.label}{pricingMultiplier !== 1.0 ? ` • ตัวคูณ ${pricingMultiplier}x` : ''})</span>
+                  <span className="matrix-sub" style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>ระยะคำนวณ {pricingRoundedDist} กม. ({currentPricingInfo.label}{activeMultiplier !== 1.0 ? ` • ตัวคูณ ${activeMultiplier}x` : ''})</span>
                 </div>
 
                 <div className="table-responsive" style={{ overflowX: 'auto', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
