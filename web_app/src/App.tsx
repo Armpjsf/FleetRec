@@ -1621,7 +1621,7 @@ export default function App() {
             <optgroup label="📋 เลือกรถด้วยตนเองจากฐานข้อมูล (Google Sheet)">
               {vehicles.map(v => (
                 <option key={v.type} value={v.type}>
-                  [ลำดับ {v.rank}] {v.type} — สูงสุด {v.maxWeight.toLocaleString()} กก. / {v.maxCbm} CBM ({v.axles})
+                  {v.type} — สูงสุด {v.maxWeight.toLocaleString()} กก. / {v.maxCbm} CBM ({v.axles})
                 </option>
               ))}
             </optgroup>
@@ -1794,7 +1794,7 @@ export default function App() {
                   <optgroup label="📋 ประเภทรถจากฐานข้อมูล (Google Sheet)">
                     {vehicles.map(v => (
                       <option key={v.type} value={v.type}>
-                        [ลำดับ {v.rank}] {v.type} ({v.axles})
+                        {v.type}{v.axles && v.axles !== '-' ? ` (${v.axles})` : ''}
                       </option>
                     ))}
                   </optgroup>
